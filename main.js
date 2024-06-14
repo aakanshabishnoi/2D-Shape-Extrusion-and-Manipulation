@@ -500,12 +500,11 @@ var displayVertices = [];
     extrudedMesh.position.y = extrusionHeight;
 
     var material = new BABYLON.StandardMaterial("extrudedMaterial", scene);
-    material.emissiveColor = new BABYLON.Color3(0, 128, 128);
+    material.emissiveColor = new BABYLON.Color3(0, 128, 0);
     extrudedMesh.material = material;
     extrudedMesh.enableEdgesRendering();
     extrudedMesh.edgesWidth = 1;
     extrudedMesh.edgesColor = new BABYLON.Color4(0, 0, 0, 1);
- 
 
   }
 
