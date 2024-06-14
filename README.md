@@ -33,17 +33,16 @@ This project is built on Babylon.js using Vite as a local development server.
   ![Step2_DrawPoints](https://github.com/aakanshabishnoi/2D-Shape-Extrusion-and-Manipulation/assets/82051164/32fdae6d-61a1-497f-b60c-3ef9984b603b)
 
 - Step3 :
-  
-![Step3_ExtrudeShape](https://github.com/aakanshabishnoi/2D-Shape-Extrusion-and-Manipulation/assets/82051164/63d97166-9f42-412c-aeed-4e5da382ae8f)
+- 
+  ![Step3_ExtrudeShape_new](https://github.com/aakanshabishnoi/2D-Shape-Extrusion-and-Manipulation/assets/82051164/c5a8ca87-e83f-4bd0-b408-7c7e88c59539)
 
 -Step4 :
 
-![Step4_moveShape](https://github.com/aakanshabishnoi/2D-Shape-Extrusion-and-Manipulation/assets/82051164/fa10b993-2db4-446e-b2d2-e66f1d255426)
+![Step4_moveShape_new](https://github.com/aakanshabishnoi/2D-Shape-Extrusion-and-Manipulation/assets/82051164/349c0474-11ed-4dab-955a-03bad22e50a7)
 
 -Step5 : 
 
-![Step5_EditVertexofShape](https://github.com/aakanshabishnoi/2D-Shape-Extrusion-and-Manipulation/assets/82051164/a2c59bbd-20b5-4763-ba50-955122b67892)
-
+![Step5_EditVertexofShape_new](https://github.com/aakanshabishnoi/2D-Shape-Extrusion-and-Manipulation/assets/82051164/48e0a219-b8f2-4ce2-b059-44ba969e5b37)
 
 
 
