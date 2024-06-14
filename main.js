@@ -149,25 +149,54 @@ const createScene = function () {
     // Creating point
     var shapeNum = drawingVertices.length;
     var sphereNumInShape = points.length - 1;
-    var sphere = BABYLON.MeshBuilder.CreateSphere("pointMarker" + shapeNum.toString() + "_" + sphereNumInShape.toString(), { diameter: 0.05 }, scene);
+    var sphere = BABYLON.MeshBuilder.CreateSphere("pointMarker" + shapeNum.toString() + "_" + sphereNumInShape.toString(), { diameter: 0.04 }, scene);
     sphere.position = point;
 
     // point UI Enhancements
     var material = new BABYLON.StandardMaterial("pointMarkerMaterial", scene);
     material.emissiveColor = new BABYLON.Color3(1, 1, 0);
     sphere.material = material;
+  }
+
+  // draw vertex points 
+  function draw3DPointMarker(point, idx1, idx2) {
+
+    // Creating point
+    //console.log("3D Point_marker", idx1,idx2);
+    var sphere = BABYLON.MeshBuilder.CreateSphere("3DpointMarker" + idx1.toString() + "_" + idx2.toString(), { diameter: 0.04 }, scene);
+    sphere.position = point;
+
+    // point UI Enhancements
+    var material = new BABYLON.StandardMaterial("3DpointMarkerMaterial", scene);
+    material.emissiveColor = new BABYLON.Color3(1, 1, 0);
+    sphere.material = material;
 
   }
 
+  var displayPoints = [];
+
+  function add3DPoints(x,z,event) {
+    let point = scene.pick(event.clientX, event.clientY);
+    if (point.hit) {
+      point.pickedPoint.x = x;
+      point.pickedPoint.z = z;
+      point.pickedPoint.y = extrusionHeight;
+      displayPoints.push(point.pickedPoint);
+    }
+  }
   //Collect the vertices for creating 2D shapes in points array
   function drawPoint(event) {
     let point = scene.pick(event.clientX, event.clientY);
     if (point.hit) {
+      var x = point.pickedPoint.x;
+      var z = point.pickedPoint.z;
       points.push(point.pickedPoint);
       drawPointMarker(point.pickedPoint);
+      add3DPoints(x,z,event);
     }
   }
 
+var displayVertices = [];
   //Complete the shape using elements from points
   function completeShape(scene) {
 
@@ -187,11 +216,13 @@ const createScene = function () {
     lines.color = new BABYLON.Color3(0, 1, 0);
 
     drawingVertices.push(points);
+    displayVertices.push(displayPoints);
     extrudeButton.disabled = false;
     // moveButton.disabled = false;
     // vertexEditButton.disabled = false;
 
     points = [];
+    displayPoints = [];
   }
 
   //---------------------------------------- STEP - 3 -----------------------------------------
@@ -202,6 +233,10 @@ const createScene = function () {
       //Extrude the shape
       let n = extrudedShapeArr.length;
       var extrudedShapeUniqueId = "shapeExtruded" + n.toString();
+      for(var i =0;i<displayVertices[vertices].length;i++)
+      {
+        draw3DPointMarker(displayVertices[vertices][i],vertices,i);
+      }
       let eShape = BABYLON.MeshBuilder.ExtrudePolygon(
         extrudedShapeUniqueId,
         {
@@ -286,7 +321,7 @@ const createScene = function () {
       // vertices mesh update
       var idx = Number(selectedExtrudedShape.id.slice(13));
       let curPointSet = drawingVertices[idx];
-
+      let currDisplaySet = displayVertices[idx]; 
       for (var i = 0; i < curPointSet.length; i++) {
         //the old position of the spheres
 
@@ -300,6 +335,19 @@ const createScene = function () {
         }
         else {
           console.log("sphere not found: ", sphereName);
+          break;
+        }
+
+        let displayName = "3DpointMarker" + idx.toString() + "_" + i.toString();
+        let displaySphere = scene.getMeshByName(displayName);
+        if (displaySphere != null) {
+          //updating the position of spheres
+          displaySphere.position.x += diff.x;
+          displaySphere.position.z += diff.z;
+          currDisplaySet[i] = displaySphere.position;
+        }
+        else {
+          console.log("sphere not found: ", displayName);
           break;
         }
 
@@ -320,7 +368,7 @@ const createScene = function () {
 
         startingPoint = pickInfo.pickedPoint;
 
-      }
+      }      
 
     }
   }
@@ -330,15 +378,15 @@ const createScene = function () {
     moveModeEnabled = false;
     drawButton.disabled = false;
     vertexEditButton.disabled = false;
-    extrudeButton.disabled = false; 
+    extrudeButton.disabled = false;
     selectedExtrudedShape = null;
   }
 
   //---------------------------------------- STEP - 5 -----------------------------------------
-   // check if the picked point corresponds to a vertex on the extruded polygon.
+  // check if the picked point corresponds to a vertex on the extruded polygon.
   var isVertex = function (){
     var isVertexBool = false;
-    
+
     // determine the cursor point from scene 2d coordinates to vector 3d cordinates
     var ray = scene.createPickingRay(scene.pointerX, scene.pointerY, BABYLON.Matrix.Identity(), camera);
     var rayCastHit = scene.pickWithRay(ray);
@@ -349,37 +397,47 @@ const createScene = function () {
     var length = 5;
 
     var rayPerpedicular = new BABYLON.Ray(origin, direction, length);
-    
+
     // for debugging 
-    var rayHelper = new BABYLON.RayHelper(rayPerpedicular);
-    // rayHelper.show(scene, new BABYLON.Color3(1, 0, 0)); // Red color
+    //var rayHelper = new BABYLON.RayHelper(rayPerpedicular);
+    //rayHelper.show(scene, new BABYLON.Color3(1, 0, 0)); // Red color
 
     // determine all the meshes hit by the perpendicular ray
     var hits = scene.multiPickWithRay(rayPerpedicular);
     if (hits){
-        console.log(hits.length);
-        for (var i=0; i<hits.length; i++){
-            // if pointMarker on ground is hit, then it is a vertex of the extruded polygon
-            // which can be used to update the extruded polygon
-            console.log(hits[i].pickedMesh.name);
-            if(hits[i].pickedMesh.name.startsWith("pointMarker")){
-                var currentMeshNonSphere = hits[i].pickedMesh;
-                console.log(currentMeshNonSphere);
-                isVertexBool = true;
-                break;
-            }
+      console.log(hits.length);
+      for (var i = 0; i < hits.length; i++) {
+        // if pointMarker on ground is hit, then it is a vertex of the extruded polygon
+        // which can be used to update the extruded polygon
+        console.log(hits[i].pickedMesh.name);
+        if (hits[i].pickedMesh.name.startsWith("pointMarker")) {
+          var currentMeshNonSphere = hits[i].pickedMesh;
+          isVertexBool = true;
+          break;
         }
-     }
+        
+        if (hits[i].pickedMesh.name.startsWith("3DpointMarker")) {
+          var currentMeshNonSphere = hits[i].pickedMesh;
+          isVertexBool = true;
+          break;
+        }
+      }
+    }
     return isVertexBool;
-}
+  }
 
   var currentMesh;
 
   // select vertex we want to edit
-  function selectVertex(scene, event) { 
+  function selectVertex(scene, event) {
+    if(!isVertex)
+    {
+      console.log("Vertex not selected !");
+      return;
+    }
     var pickInfo = scene.pick(scene.pointerX, scene.pointerY, function (mesh) {
-    return mesh !== ground && (mesh.id.startsWith("pointMarker") || (mesh.id.startsWith("shapeExtruded") && isVertex())); });
-
+      return mesh !== ground && (mesh.id.startsWith("pointMarker") || mesh.id.startsWith("3DpointMarker") || (mesh.id.startsWith("shapeExtruded") && isVertex()));
+    });
 
     if (pickInfo.hit) {
       currentMesh = pickInfo.pickedMesh;
@@ -397,7 +455,7 @@ const createScene = function () {
 
   //  move selected vertex using drag from one point to other
   function moveSelectedVertex(scene, event) {
-    
+
     if (!startingPoint) {
       return;
     }
@@ -405,64 +463,49 @@ const createScene = function () {
     var current = getGroundPosition(event);
 
     if (!current) {
-        return;
+      return;
     }
 
 
     // updating the vertices
     var diff = current.subtract(startingPoint);
-    currentMesh.position.addInPlace(diff);
-
-    // updating the line mesh 2D shape
     var curMeshIdxs = currentMesh.id.split("_");
-    var lineMeshId = "lines" + curMeshIdxs[0].slice(11);
-    var pointToUpdate = Number(curMeshIdxs[1]);
+    currentMesh.position.addInPlace(diff);
+    console.log(curMeshIdxs, diff.x, diff.y,diff.z);
+
+    var vertices = Number(curMeshIdxs[0].slice(-1));
+    var index = Number(curMeshIdxs[1]);
+
+    if(curMeshIdxs[0].startsWith("3D")){
+      drawingVertices[vertices][index].x = displayVertices[vertices][index].x;
+      drawingVertices[vertices][index].z = displayVertices[vertices][index].z;
+    }
+    else
+    {
+      displayVertices[vertices][index].x = drawingVertices[vertices][index].x;
+      displayVertices[vertices][index].z = drawingVertices[vertices][index].z;
+    }
+
+    var lineMeshId = "lines" + vertices;
     var lineMesh = scene.getMeshByID(lineMeshId);
-    
-    var positions = lineMesh.getVerticesData(BABYLON.VertexBuffer.PositionKind);
-    var startIdx = 3*Number(pointToUpdate);
-    
-    positions[startIdx] = currentMesh.position.x;
-    positions[startIdx+1] = currentMesh.position.y;
-    positions[startIdx+2] = currentMesh.position.z;
-
-    if(startIdx == 0){
-        var n = positions.length;
-        positions[n-3] = positions[startIdx];
-        positions[n-2] = positions[startIdx+1];
-        positions[n-1] = positions[startIdx+2];
-    }
-
-    var myPoints = [];
-
-    for (var i = 0; i < positions.length; i += 3) {
-        var x = positions[i];
-        var y = positions[i + 1];
-        var z = positions[i + 2];
-
-        myPoints.push(new BABYLON.Vector3(x, y, z));
-    }
-
     lineMesh.dispose(); // Dispose of the existing mesh
-    lineMesh = BABYLON.MeshBuilder.CreateLines(lineMeshId, { points: myPoints, updatable: true}, scene);
-    lineMesh.color = new BABYLON.Color3(0, 0, 1);
+    lineMesh = BABYLON.MeshBuilder.CreateLines(lineMeshId, { points: drawingVertices[vertices], updatable: true }, scene);
+    lineMesh.color = new BABYLON.Color3(0, 1, 0);
     
-    // updating the extruded polygon
-    var extrudedMeshId = "shapeExtruded" + curMeshIdxs[0].slice(11);
+    var extrudedMeshId = "shapeExtruded" + vertices;
     var extrudedMesh = scene.getMeshByID(extrudedMeshId);
     extrudedMesh.dispose();
-    extrudedMesh = BABYLON.MeshBuilder.ExtrudePolygon(extrudedMeshId, {shape: myPoints, depth: extrusionHeight, updatable: true}, scene, earcut);
+    extrudedMesh = BABYLON.MeshBuilder.ExtrudePolygon(extrudedMeshId, { shape: drawingVertices[vertices], depth: extrusionHeight, updatable: true }, scene, earcut);
 
     extrudedMesh.position.y = extrusionHeight;
-    
+
     var material = new BABYLON.StandardMaterial("extrudedMaterial", scene);
-    material.emissiveColor = new BABYLON.Color3(0, 1, 0);
+    material.emissiveColor = new BABYLON.Color3(0, 128, 128);
     extrudedMesh.material = material;
     extrudedMesh.enableEdgesRendering();
-    extrudedMesh.edgesWidth = 1.0; // Set the width of the edges
-    extrudedMesh.edgesColor = new BABYLON.Color4(0.1, 0.1, 0.1, 1);
-
-    startingPoint = current;
+    extrudedMesh.edgesWidth = 1;
+    extrudedMesh.edgesColor = new BABYLON.Color4(0, 0, 0, 1);
+ 
 
   }
 
